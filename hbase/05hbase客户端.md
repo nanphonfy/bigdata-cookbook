@@ -137,6 +137,264 @@ class ThreadLocalPool<R> extends ThreadLocal<R> implements PoolMap.Pool<R>
 //HTableFactory用户创建HTabel的工具类。
 HtablePool pool=new HTablePool(conf,30,factory,PoolType.ThreadLocal);
 ```
+- 创建表
+
+```Java
+// 创建表管理类
+HBaseAdmin admin = new HBaseAdmin(config); 
+// 创建表描述类
+HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("nanphonfy"));
+//HTableDescriptor desc = new HTableDescriptor("nanphonfy");...
+// 创建列族的描述类
+for (String columnDescriptor : columnDescriptors) {
+    HColumnDescriptor family = new HColumnDescriptor(columnDescriptor);
+    desc.addFamily(family);
+}
+// 将列族添加到表中
+desc.addFamily(family);
+// 创建表
+admin.createTable(desc);
+```
+- 删除表
+
+```Java
+HBaseAdmin admin = new HBaseAdmin(config);
+admin.disableTable("nanphonfy");
+admin.deleteTable("nanphonfy");
+admin.close();
+```
+- 插入数据
+
+```Java
+HTableInterface table = null;
+try {
+    table = Constants.CONNECTION.getTable(tableName);
+    Put put = new Put(Bytes.toBytes(rowKey));// 创建put，添加rowKey
+    put.add(Bytes.toBytes(family), Bytes.toBytes(qualifier), Bytes.toBytes(value));// 放入数据
+    table.put(put);// 将数据存入table
+    table.flushCommits();
+} catch (IOException e) {
+    e.printStackTrace();
+    return false;
+} finally {
+    try {
+        if(table != null) {
+            table.close();// 关闭table
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+//添加字段
+Put add(byte[] family, byte[] qualifier, byte[] value)
+Put add(byte[] family, byte[] qualifier, long ts, byte[] value)
+//获取键值对
+List<Cell> get(byte[] family, byte[] qualifier)
+//判断是否存在
+boolean has(byte[] family, byte[] qualifier)
+boolean has(byte[] family, byte[] qualifier, long ts)
+boolean has(byte[] family, byte[] qualifier, byte[] value)
+boolean has(byte[] family, byte[] qualifier, long ts, byte[] value)
+boolean has(byte[] family, byte[] qualifier, long ts, byte[] value, boolean ignoreTS, boolean ignoreValue)
+```
+- 查询
+
+```java
+Result row = null;
+try {
+    HTableInterface table = Constants.CONNECTION
+            .getTable(TableName.valueOf(Constants.NOTE_TABLE_NAME));// 从连接池中获取表
+    Get get = new Get(rowKey.getBytes());//获取get，注入rowKey
+    //get.addColumn(byte[] family, byte[] qualifier);
+    row = table.get(get);
+    table.close();// 关闭table
+} catch (Exception e) {
+    e.printStackTrace();
+}
+
+//添加列族或列
+Get addColumn(byte[] family, byte[] qualifier)
+Get addFamily(byte[] family)
+//设置查询属性
+void setCacheBlocks(boolean cacheBlocks)
+Get setFilter(Filter filter)
+Get setMaxVersions()//2147483647
+Get setMaxVersions(int maxVersions)
+Get setTimeRange(long minStamp, long maxStamp)
+Get setTimeStamp(long timestamp)
+//查询属性
+boolean getCacheBlocks()
+public int getMaxVersions()
+public TimeRange getTimeRange()
+public Set<byte[]> familySet()
+Map<byte[], NavigableSet<byte[]>> getFamilyMap()
+Map<String, Object> getFingerprint()
+Filter getFilter()
+byte[] getRow()
+int numFamilies()
+boolean hasFamilies()
+```
+- 扫描读
+>不确定行键下，遍历全表或部分数据，可限制时间戳、版本数量、列族、列名等。对于扫描操作，设置过滤器比单行读更重要。
+
+```java 
+HTableInterface table = Constants.CONNECTION.getTable(TableName.valueOf(tableName));// 从连接池中获取表
+Scan scan = new Scan();// 创建scan，用于查询
+//version
+//scan.setTimeRange(long minStamp, long maxStamp);
+//batch and caching
+//scan.setBatch(0);
+//scan.setCaching(100000);
+
+ResultScanner scanner = table.getScanner(scan);// 通过scan查询结果
+for (Result row : scanner) {//循环出每一条row
+    System.out.println(row.getRow());
+    for (KeyValue kv : row.raw()) {//循环row的不同列
+        System.out.println(new String(kv.getRow()));//获取rowkey
+        System.out.println(new String(kv.getFamily()));//获取列族
+        System.out.println(new String(kv.getQualifier()));//获取列描述
+        System.out.println(new String(kv.getValue()));//获取值
+        System.out.println(kv.getTimestamp());//获取版本时间
+    }
+}
+table.close();// 关闭table
+
+//添加列族或列
+Scan addFamily(byte[] family)
+Scan addColumn(byte[] family, byte[] qualifier)
+//设置查询属性
+void setBatch(int batch)
+void setCacheBlocks(boolean cacheBlocks)
+void setCaching(int caching)
+Scan setFamilyMap(Map<byte[], NavigableSet<byte[]>> familyMap)
+Scan setFilter(Filter filter)
+Scan setMaxVersions()//2147483647
+Scan setMaxVersions(int maxVersions)
+Scan setStartRow(byte[] startRow)
+Scan setStopRow(byte[] stopRow)
+Scan setTimeRange(long minStamp, long maxStamp)
+Scan setTimeStamp(long timestamp)
+//查询属性
+int getBatch()
+boolean getCacheBlocks()
+int getCaching()
+byte[][] getFamilies()
+Map<byte[], NavigableSet<byte[]>> getFamilyMap()
+Filter getFilter()
+Map<String, Object> getFingerprint()
+int getMaxVersions()
+byte[] getStartRow()
+byte[] getStopRow()
+TimeRange getTimeRange()
+boolean hasFamilies()
+boolean hasFilter()
+boolean isRaw()
+boolean isGetScan()
+int numFamilies()
+```
+- 删除
+
+```
+HTableInterface table = null;
+try {
+    table = Constants.CONNECTION.getTable(TableName.valueOf(tableName));
+    Delete del = new Delete(Bytes.toBytes(rowKey));// 创建delete类，存入要删除的rowKey
+    //            del.deleteColumn(byte[] family, byte[] qualifier, long timestamp);//
+    //            del.deleteColumns(byte[] family, byte[] qualifier);
+    //            del.deleteFamily(byte[] family);
+    table.delete(del);// 删除数据
+    table.flushCommits();
+} catch (IOException e) {
+    e.printStackTrace();
+    return false;
+} finally {
+    try {
+        if (table != null) {
+            table.close();
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+//删除某列某版本
+Delete deleteColumn(byte[] family, byte[] qualifier)
+Delete deleteColumn(byte[] family, byte[] qualifier, long timestamp)
+//删除某列所有版本
+Delete deleteColumns(byte[] family, byte[] qualifier)
+Delete deleteColumns(byte[] family, byte[] qualifier, long timestamp)
+//删除某个列族
+Delete deleteFamily(byte[] family)//timestamp=9223372036854775807L
+Delete deleteFamily(byte[] family, long timestamp)
+//设定删除操作的时间戳
+```
+## 2. hbase shell
+>hbase的shell工具用Ruby编写，使用JRuby解释器。分为：交互式模式(实时随机访问)和命令批处理模式(shell编程批量、流程化处理)。
+
+bin/hbase shell  
+help（帮助手册）
+shell所有命令分6组：常规(general)、DDL、DML、工具(tools)、复制（replication）和安全（security）。
+
+- general  
+status(集群状态)、version(hbase版本)
+
+- ddl  
+数据定义语言，建删改列表、上下线表等  
+help "${COMMAND_NAME}"  
+>- =>赋值，eg{NAME=>'f1'};
+>- 字符串必须用单引号，eg'f1'
+>- 指定列族特定属性，用花括号，eg{NAME=>'f1',VERSIONS=5}
+
+- dml  
+数据操纵语言，增删改查、清空等。
+
+```
+1. 扫全表
+scan '.META.'
+行包括一个列族info和三个列名regioninfo、server和serverstartcode。
+2. 指定列名全表扫描
+scan '.META.',{COLUMNS=>'info:regioninfo'}
+scan '.META.',COLUMNS=>'info:regioninfo'
+3. 指定多列、限定返回行数、设置开始行的全表扫描
+scan '.META.',{COLUMNS=>['info:regioninfo','info:serverstartcode'],LIMIT=>2,STARTROW=>'XXXX'}
+4. 设定时间戳返回全表扫描
+scan '.META.',{COLUMNS=>'info:regioninfo',TIMERANGE=>[1505023226047,1505023426047]}
+5. 过滤条件全表扫描
+scan '.META.',{FILTER=>“(PrefixFilter('前缀') AND (QualifierFilter(=,'binary:regioninfo'))) AND (TimestampsFilter(1505023226047,1505023426047))”}
+"="表示比较器，"binary:"表示二进制比较，两个时间戳是数组的两元素不是区间。
+```
+- tools
+>多用于hbase集群管理+调优。包含合并、分裂、负载均衡、日志回滚、region分配和移动、zookeeper信息查看等。eg.compact可合并一张表、一个region的某个列族、一张表的某个列族。
+
+命令 | 含义
+---|---
+assign | 分配region
+balance_switch | 负载均衡器开关
+balancer|触发集群负载均衡器
+close_region|关闭某region
+compact|合并表或region
+flush|flush表或region
+hlog_roll|regionserver的hlog回滚
+major_compact|大合并表或region
+move|移动region
+split|分裂表或region
+unassign|解除某region
+zk_dump|zookeeper信息(主节点、regionserver+zookeeper节点状态统计)
+- replication  
+待完善
+- security
+>DCL（数据控制语言），三个安全命令：grant、revoke和user_permission。使用前提：附带security的hbase版本+kerberos安全认证。
+
+
+
+
+
+
+
+
+
+
 
 
 
