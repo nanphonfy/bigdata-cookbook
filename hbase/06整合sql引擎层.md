@@ -29,7 +29,7 @@ HiveQL查询接口、HDFS底层存储、mapreduce执行层
 - 整体结构   
 >client：CLI、HWI、thriftserver、JDBC、ODBC等；  
 metastore：存放元数据的模块；  
-driver：编译、优化、执行hive sql的模块。（解析为mapreduce任务）
+driver：编译、优化、执行hive sql的模块。（解析为mapreduce任务）。
 
 - hive整合hbase架构   
 >使用hive storage handlers整合，只需变动driver层，driver调用handlers，将任务解析映射到hbase集群(直接或转化为mapreduce访问)。
@@ -38,5 +38,7 @@ driver：编译、优化、执行hive sql的模块。（解析为mapreduce任务
 ---|---
 配置使用简单 |查询速度慢，大部分都要启动mapreduce
 代码量降低 |每个mapreduce要启N个handler连集群，占用连接
-低耦合整合，Apache官方支持 |列映射诸多限制
+低耦合整合，Apache官方支持 |列映射诸多限制  
+
+
 
