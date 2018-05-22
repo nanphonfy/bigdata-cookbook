@@ -232,3 +232,121 @@ begin
   close my_cursor;
 end;
 ```
+### 练习
+
+```
+alter table student add zz varchar2(10）
+declare
+  xh1 number;
+  zz1 varchar2(10）;
+  cursor cursor1 is select xh,zz from address;
+begin
+  open cursor1;
+  fetch cursor1 into xh1,zz1;
+  while cursor1%found loop
+     update student set zz = zz1 where xh  = xh1;
+     fetch cursor1 into xh1,zz1;
+  end loop;
+  close cursor1;
+end;
+/
+
+//不使用游标也可以实现需求
+update student set zz=(select zz form address address.xh=student.xh）;
+```
+### REF 游标
+>
+    REF 游标和游标变量用于处理运行时动态执行的 SQL 查询。
+    创建游标变量需要两个步骤：
+        ①声明 REF 游标类型;
+        ②声明 REF 游标类型的变量。
+    用于声明 REF 游标类型的语法为：
+    	`TYPE <ref_cursor_name> IS REF CURSOR
+    	[RETURN <return_type>];`
+    打开游标变量的语法如下：
+	 `OPEN cursor_name FOR select_statement;`
+
+```
+declare 
+  type refcur is ref cursor；
+  cursor2 refcur;
+  tab varchar2(50);
+  tb_name varchar2(50);
+  sno2 student.sno%type;
+  name2 student.sname%type;
+begin
+  tb_name := '&tab';
+  if tb_name='student' then
+    open cursor2 for select sno,sname from student;
+    fetch cursor2 into no2,name2;
+	while cursor2%found
+ 	loop
+	  dbms_output.put_line(cursor2%rowcount||'. 学号是'||no2||',姓名是:'||sname2);
+	  fetch cursor2 into no2,name2;
+	end loop;
+    close cursor2;
+  else
+	dbms_output.put_line('不是正确的表的名字');
+  end if;
+end;
+/
+```
+
+#### REF游标题目
+
+```
+已建立表，如下：
+create table student (xh number, kc varchar2(10));
+insert into student values(1,'语文');
+insert into student values(1,'数学');
+insert into student values(1,'英语');
+insert into student values(1,'历史');
+insert into student values(2,'语文');
+insert into student values(2,'数学');
+insert into student values(2,'英语');
+insert into student values(3,'语文');
+insert into student values(3,'英语');
+
+完成的任务:
+生成student2表(xh number, kc  varchar2(50))；
+对应于每一个学生，求出他的总的选课记录，把每个学生的选课记录插入到student2表中。
+即，student2中的结果如下：
+XH KC
+--- ------------
+1 语文数学英语历史
+2 语文数学英语
+3 语文英语
+```
+
+- 实现代码
+```
+declare
+  xh1 student.xh%type;
+  kc1 varchar2(50) := '';
+  kc2 varchar2(50);
+  cursor cursor1 is select distinct(xh) from student;
+  type refcur is ref cursor;
+  cursor2 refcur;
+begin
+  open cursor1;
+  fetch cursor1 into xh1;
+  while cursor1%found loop
+    kc1 := '';
+    open cursor2 for select kc from student where xh = xh1;
+    fetch cursor2 into kc2;
+    while cursor2%found loop
+      kc1 := kc1||kc2;
+      fetch cursor2 into kc2;
+    end loop;
+    close cursor2;
+    insert into student2 values(xh1, kc1);
+    commit;
+  fetch cursor1 into xh1;
+  end loop;
+  close cursor1;
+end;
+/
+```
+
+
+
