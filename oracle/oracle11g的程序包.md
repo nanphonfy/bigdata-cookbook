@@ -160,5 +160,5 @@ end mycursor_use;
 end pack3;
 /
 
-exec pack3.mycursor_use;
+exec pack3.mycursor_use
 ```
