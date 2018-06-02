@@ -161,6 +161,4 @@ end pack3;
 /
 
 exec pack3.mycursor_use;
-
-desc user_source;
 ```
