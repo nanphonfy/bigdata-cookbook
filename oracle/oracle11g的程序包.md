@@ -160,141 +160,61 @@ end mycursor_use;
 end pack3;
 /
 
-exec pack3.mycursor_use;
-
-desc user_source;
+exec pack3.mycursor_use
 ```
 
-### 有关子程序和程序包的信息
+jar包ojdbc6.jar
 
-```
--- USER_OBJECTS 视图包含用户创建的子程序和程序包的信息
-SQL> SELECT object_name, object_type
-  2  FROM USER_OBJECTS
-  3  WHERE object_type IN ('PROCEDURE', 'FUNCTION','PACKAGE', 'PACKAGE BODY');
-
-OBJECT_NAME                                                                      OBJECT_TYPE
--------------------------------------------------------------------------------- -------------------
-PACK3                                                                            PACKAGE BODY
-PACK3                                                                            PACKAGE
-PACK2                                                                            PACKAGE BODY
-PACK2                                                                            PACKAGE
-PACK1                                                                            PACKAGE BODY
-PACK1                                                                            PACKAGE
-
--- USER_SOURCE 视图存储子程序和程序包的源代码
----注意大写
-SQL> SELECT line, text FROM USER_SOURCE
-  2  WHERE NAME='PACK3';
-
-      LINE TEXT
----------- --------------------------------------------------------------------------------
-         1 package pack3 is
-         2   type refcur is ref cursor;
-         3   procedure mycursor_use;
-         4 end pack3;
-         1 package body pack3 is
-         2 procedure mycursor_use
-         3 is
-         4   mycursor refcur;
-         5   stu_rec student%rowtype;
-         6 begin
-         7   open mycursor for select *from student;
-         8   fetch mycursor into stu_rec;
-         9   while mycursor%found loop
-        10     dbms_output.put_line('学号是:' || stu_rec.sno||'，姓名是：'||stu_rec.sname);
-        11     fetch mycursor into stu_rec;
-        12   end loop;
-        13   close mycursor;
-        14 end mycursor_use;
-        15 end pack3;
-```
-#### 内置程序包  
->扩展数据库的功能  
-为 PL/SQL 提供对 SQL 功能的访问  
-用户 SYS 拥有所有程序包  
-是公有同义词  
-可以由任何用户访问  
-
-### DBMS_Job包的用法
->
-    包含以下子过程： 
-        Broken()过程：更新一个已提交的工作的状态，典型地是用来把一个已破工作标记为未破工作。这个过程有三个参数：job 、broken与next_date。
-    	change()过程：用来改变指定工作的设置。这个过程有四个参数：job、what 、next_date与interval。 
-    	Interval()过程：过程用来显式地设置重执行一个工作之间的时间间隔数
-    	Isubmit()过程：过程用来用特定的工作号提交一个工作
-    	Next_Date()过程：显式地设定一个工作的执行时间。这个过程接收两个参数：job与next_date
-        Remove()过程：删除一个已计划运行的工作。这个过程接收一个参数
-        Run()过程：用来立即执行一个指定的工作。这个过程只接收一个参数
-    	Submit()过程：工作被正常地计划好
-    	User_Export()过程：返回一个命令，此命令用来安排一个存在的工作以便此工作能重新提交
-    	What()过程：应许在工作执行时重新设置此正在运行的命令
-
-- 练习
-
-```
---创建测试表
-create table a(a date);
---创建一个自定义过程
-create or replace procedure test as
+--没有返回参数的存储过程
+create or replace procedure test_no_out_param(no in int,name in varchar2,age in int)
+is
 begin
-  insert into a values(sysdate);
+  insert into student(sno,sname,sage) values(no,name,age);
+  commit;
 end;
 /
 
---每分钟调用test过程一次
---创建JOB  
-variable job1 number;    
+create or replace procedure test_no_out_param_update(no in int,name in varchar2,age in int)
+is
 begin
-  --每天1440（24*60）分钟，即一分钟运行test过程一次
-  dbms_job.submit(:job1,'test;',sysdate,'sysdate+1/1440');
+  update student set sage = age where sno = no;
+  commit;
 end;
 /
---运行JOB
+
+--有返回参数的存储过程
+create or replace procedure test_out_param(no in int,age in int)
+is
 begin
-  dbms_job.run(:job1);
+  select sname,sage into name,age from student where sno = no;
 end;
 /
---检查结果
-select to_char(a,'yyyymmdd hh24:mi:ss') from a;
---删除job
---ORA-01008: 并非所有变量都已绑定(要把":"去掉)
+
+
+--存储过程返回列表
+create or replace package outCursorPack
+is
+  type outCursor is ref cursor;
+end outCursorPack;
+/
+
+create or replace procedure test_out_result_set(p_cursor out outCursorPack.outCursor)
+is
 begin
-  dbms_job.remove(:job2);
+  open p_cursor for select *from student;
 end;
 /
---参看jobs
-select *from dba_jobs;
-select *from dba_jobs_running;
-```
-### UTL_FILE包的用法
-- 练习(未测试)
-```
---systemm/systemm
-select *from all_directories;
---删除掉directory
-drop directory;
 
-create directory TEST_DIR as 'D:\data';
-grant read,write on directory TEST_DIR to zsr;
-
---zsr/zsr
-create or replace procedure read_txtfile(path in varchar2,name varchar2)
-as
-  l_output utl_file.file_type;
-  str varchar2(2000);
+-- 实现分页的存储过程
+-- ps 每页几个记录，cs 显示第几页，
+create or replace procedure test_page(ps int,cs int,p_cursor out outCursorPack.outCursor)
+is
 begin
-  l_output := utl_file.fopen(path,name,'r',2000);
-  loop
-    utl_file.get_line(l_output,str);
-	dbms_output.put_line(str);
-  end loop;
-  utl_file.fclose(l_output);
-exception
- when no_data_found then
-   utl_file.fclose(l_output); 
-end
+  open p_cursor for 
+  select *from (select s.*,rownum rn from student s) where rn>ps*(cs-1) and
+  rn <= ps*cs order by sno;
+end;
 /
 
-exec read_txtfile('TEST_DIR','1.txt')
-```
+
+
