@@ -23,6 +23,55 @@ SQL 是数据库语言，Oracle使用该语言存储和检索信息；表是主�
     数据类型：字符、数值、日期时间、RAW/LONG RAW、LOB
     字符数据类型：CHAR、VARCHAR2、LONG
     LOB->CLOB、BLOB、BFILE
+
+- 练习
+```SQL  
+select *from number_test;
+create table number_test (num number(3,2));
+--表示所定义的数字最大是3位长，其中包含2位小数。就是说这个类型最大可设置1位整数和2位小数。
+insert into number_test values(1.23);
+insert into number_test values(1.24767)
+
+SQL> select *from number_test;
+  NUM
+-----
+ 1.23
+ 1.23
+ 1.24
+ 
+ORA-01438: 值大于为此列指定的允许精度;
+insert into number_test values(11.236767);
+
+
+create table number_test2(num number(3));
+insert into number_test2 values(11.23);
+insert into number_test2 values(11.67);
+-- 会进行四舍五入
+
+SQL> select *from number_test2;
+
+ NUM
+----
+  11
+  12
+
+SQL> select sysdate from dual;
+SYSDATE
+-----------
+2018/6/5 8:
+
+SQL> select to_char(sysdate,'yyyymmdd hh24:mi:ss') from dual;
+TO_CHAR(SYSDATE,'YYYYMMDDHH24:
+------------------------------
+20180605 08:40:22
+
+SQL> select to_char(systimestamp,'yyyymmdd hh24:mi:ssxff6') from dual;
+
+TO_CHAR(SYSTIMESTAMP,'YYYYMMDD
+------------------------------
+20180605 08:41:05.615000
+```
+
     
 >
     Oracle中伪列就像一个表列，但是它并没有存储在表中
@@ -40,6 +89,47 @@ ALTER TABLE
 TRUNCATE TABLE  
 DROP TABLE
 
+- 练习
+```
+--创建测试表
+create table student0(sno number(6),sname varchar2(10));
+
+--新增列
+alter table student0 add tele varchar2(11);
+
+--修改列大小
+alter table student0 modify tele varchar2(20);
+-- 20 调整回11 也可以 
+
+-- 删除列
+alter table student0 drop column tele;
+
+insert into student0 values(1,'A','1389124890');
+insert into student0 values(1,'B','1389124890');
+
+--克隆表数据
+create table student2 as select *from student0;
+
+--克隆没有数据的表
+create table student2 as select *from student where 1>1;
+
+--【删除数据区别】
+truncate table student2;
+truncate后不需再commit
+
+delete from student2
+①需要再commit②会进入日志，可回滚。
+
+-- 把student0表数据插入student2
+insert into student2 select *from student0;
+
+-- oracle是区分大小写的
+-- 如果不知道是不是大小写，可以这么做
+select *from student2 where upper(sname) = 'A';
+
+--插入单引号
+update student2 set sname = 'A''C' where sname = 'A';
+```
 #### 数据操作语言
 >数据操纵语言用于检索、插入和修改数据
 数据操纵语言是最常见的SQL命令  
