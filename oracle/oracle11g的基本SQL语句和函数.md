@@ -139,6 +139,64 @@ INSERT
 UPDATE  
 DELETE
 
+- 练习
+```
+-- 各部门的总工资
+SQL> select department,sum(salary)
+from employee
+group by department;
+
+DEPARTMENT SUM(SALARY)
+---------- -----------
+财务科          5800.8
+办公室            4000
+业务科           18500
+
+-- 各地区的平均工资
+select address,avg(salary)
+from employee
+group by address;
+
+ADDRESS         AVG(SALARY)
+--------------- -----------
+上海市          2533.333333
+南昌市                 3100
+南京市               4150.4
+
+-- 平均工资大于3000的部门
+select department,avg(salary)
+from employee
+group by department
+having(avg(salary) > 3000);
+
+DEPARTMENT AVG(SALARY)
+---------- -----------
+财务科          5800.8
+办公室            4000
+
+-- 平均工资 大于所有员工平均工资 的部门和平均工资
+select department,avg(salary)
+from employee
+group by department
+having(avg(salary) > (select avg(salary) from employee));
+
+DEPARTMENT AVG(SALARY)
+---------- -----------
+财务科          5800.8
+办公室            4000
+
+-- 平均成绩大于 3000 的部门和部门平均工资，按部门名称降序
+select department,avg(salary)
+from employee
+group by department
+having(avg(salary) > 3000)
+order by department;
+
+DEPARTMENT AVG(SALARY)
+---------- -----------
+办公室            4000
+财务科          5800.8
+```
 #### 数据控制语言
 >数据控制语言为用户提供权限控制命令 
 用于权限控制的命令有：
@@ -147,3 +205,88 @@ REVOKE 撤销已授予的权限
 
 ### SQL操作符
 Oracle 支持的SQL操作符分类如下：算术操作符、比较操作符、逻辑操作符、集合操作符、连接操作符。
+
+### Oracle 函数
+
+- 字符函数
+
+函数 | 输入 |输出
+---|---|---
+Initcap(char) 	|Select initcap('hello') from dual;	|Hello 
+Lower(char) 	|Select lower('FUN') from dual;	|fun 
+Upper(char) 	|Select upper('sun') from dual;	|SUN 
+Ltrim(char,set) 	|Select ltrim( 'xyzadams','xyz') from dual; 	|adams
+Rtrim(char,set) 	|Select rtrim('xyzadams','ams') from dual; |xyzad 
+Translate(char, from, to) 	|Select translate('jack','j' ,'b') from dual; 	|back 
+Replace(char, searchstring,[rep string]) 	|Select replace('jack and jue' ,'j','bl') from dual;	|black and blue 
+Instr (char, m, n) 	|Select instr ('worldwide','d') from dual; 	|5 
+Substr (char, m, n) 	|Select substr('abcdefg',3,2) from dual; 	|cd 
+Concat (expr1, expr2) 	|Select concat ('Hello',' world') from dual; 	|Hello world
+
+- 字符函数
+```
+select chr(96) from dual;
+
+CHR(96)
+-------
+`
+select ascii('a') from dual;
+
+ASCII('A')
+----------
+        97
+
+select lpad('abcd',10,'x') from dual;
+
+LPAD('ABCD',10,'X')
+-------------------
+xxxxxxabcd
+```
+
+- 日期时间函数
+```
+-- oracle取年份，比较麻烦
+select extract(year from sysdate) from dual;
+
+-- 这个月的最后一天
+select last_day(sysdate) from dual;
+
+-- 大于27岁的员工
+select *from employee where add_months(birthday,47*12)<sysdate;
+
+-- 从出生到现在有多少天
+select floor(sysdate - birthday) from employee
+
+-- 员工的出生日期为当月最后20天那日
+select *from employee where last_day(birthday)-20 = birthday;
+```
+
+```
+--from 产业基地
+create table employee(
+employee varchar2(10) not null,
+employeeName varchar2(10) not null,
+sex varchar2(1) not null,
+birthday date not null,
+address varchar2(15),
+telephone number(20) not null,
+hiredate date not null,
+department varchar2(10),
+headship varchar2(10),
+salary number(10,2) not null
+);
+alter table employee add constraint pk_employee primary key(employee);
+
+
+insert into employee values('E2005001','喻自强','M',to_date('1965-4-15','yyyy-mm-dd'),'南京市','13817605008',to_date('1990-2-6','yyyy-mm-dd'),'财务科','科长','5800.80');
+insert into employee values('E2005002','张小梅','F',to_date('1973-11-1','yyyy-mm-dd') ,'上海市','13817605008',to_date('1991-3-28','yyyy-mm-dd'),'业务科','职员','2400.00');
+insert into employee values('E2005003','张小娟','F',to_date('1973-3-6','yyyy-mm-dd'),'上海市','13817605008',to_date('1992-3-28','yyyy-mm-dd'),'业务科','职员','2600.00');
+insert into employee values('E2005005','张小东','M',to_date('1973-9-3','yyyy-mm-dd'),'南昌市','13817605008',to_date('1992-3-28','yyyy-mm-dd'),'业务科','职员','1800.00');
+insert into employee values('E2006001','陈辉','M',to_date('1965-11-1','yyyy-mm-dd'),'南昌市','13817605008',to_date('1990-3-28','yyyy-mm-dd'),'办公室','主任','4000.00');
+insert into employee values('E2006002','韩梅','F',to_date('1973-12-11','yyyy-mm-dd'),'上海市','13817605008',to_date('1990-11-28','yyyy-mm-dd'),'业务科','职员','2600.00');
+insert into employee values('E2006003','刘风','F',to_date('1973-5-21','yyyy-mm-dd'),'南昌市','13817605008',to_date('1991-2-28','yyyy-mm-dd'),'业务科','职员','2500.00');
+insert into employee values('E2007001','吴浮萍','M',to_date('1973-9-12','yyyy-mm-dd'),'南京市','13817605008',to_date('1990-6-28','yyyy-mm-dd'),'业务科','职员','2500.00');
+insert into employee values('E2005004','张露','F',to_date('1967-1-5','yyyy-mm-dd'),'南昌市','13817605008',to_date('1990-3-28','yyyy-mm-dd'),'业务科','科长','4100.00');
+commit;
+```
+
