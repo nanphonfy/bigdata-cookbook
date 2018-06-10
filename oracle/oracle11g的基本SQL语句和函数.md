@@ -139,6 +139,214 @@ INSERT
 UPDATE  
 DELETE
 
+#### 数据控制语言
+>数据控制语言为用户提供权限控制命令 
+用于权限控制的命令有：
+>>GRANT 授予权限  
+REVOKE 撤销已授予的权限
+
+### SQL操作符
+Oracle 支持的SQL操作符分类如下：算术操作符、比较操作符、逻辑操作符、集合操作符、连接操作符。
+
+- 算术操作符
+>用于执行数值计算  
+可以在SQL语句中使用算术表达式，算术表达式由数值数据类型的列名、数值常量和连接它们的算术操作符组成  
+包括加(+)、减(-)、乘(*)、除(/)
+
+- 比较操作符
+>用于比较两个表达式的值  
+包括 =、!=、<、>、<=、>=、BETWEEN…AND、IN、LIKE 和 IS NULL等，LIKE可以使用匹配符_、%
+
+- 逻辑操作符  
+>用于组合多个计较运算的结果以生成一个或真或假的结果  
+包括与(AND)、或(OR)和非(NOT)  
+
+-连接操作符 
+>用于将多个字符串或数据值合并成一个字符串
+```
+- 通过使用连接操作符可以将表中的多个列合并成逻辑上的一行列
+SQL> SELECT (venname|| ' 的地址是 '||venadd1||' '||venadd2 ||' '||venadd3) address
+FROM vendor_master WHERE vencode='V001';
+```
+#### 操作符的优先级
+- SQL 操作符的优先级从高到低的顺序是：
+>
+    算术操作符           --------最高优先级
+    连接操作符
+    比较操作符
+    NOT 逻辑操作符
+    AND 逻辑操作符
+    OR   逻辑操作符   --------最低优先级 
+
+### Oracle 函数
+>Oracle 提供一系列用于执行特定操作的函数  
+SQL 函数带有一个或多个参数并返回一个值  
+
+- SQL函数的分类  
+`SQL函数->单行函数、分组函数、分析函数`
+
+##### 单行函数分类
+>单行函数对于从表中查询的每一行只返回一个值  
+可以出现在 SELECT 子句中和 WHERE 子句中   
+>- 单行函数可以大致划分为：
+>>字符函数  
+日期时间函数  
+数字函数  
+转换函数  
+混合函数
+
+- 字符函数
+
+函数 | 输入 |输出
+---|---|---
+Initcap(char) 	|Select initcap('hello') from dual;	|Hello 
+Lower(char) 	|Select lower('FUN') from dual;	|fun 
+Upper(char) 	|Select upper('sun') from dual;	|SUN 
+Ltrim(char,set) 	|Select ltrim( 'xyzadams','xyz') from dual; 	|adams
+Rtrim(char,set) 	|Select rtrim('xyzadams','ams') from dual; |xyzad 
+Translate(char, from, to) 	|Select translate('jack','j' ,'b') from dual; 	|back 
+Replace(char, searchstring,[rep string]) 	|Select replace('jack and jue' ,'j','bl') from dual;	|black and blue 
+Instr (char, m, n) 	|Select instr ('worldwide','d') from dual; 	|5 
+Substr (char, m, n) 	|Select substr('abcdefg',3,2) from dual; 	|cd 
+Concat (expr1, expr2) 	|Select concat ('Hello',' world') from dual; 	|Hello world
+
+- 字符函数
+>以下是一些其它的字符函数：  
+CHR和ASCII  
+LPAD和RPAD  
+TRIM  
+LENGTH  
+DECODE
+```
+-- 字符函数接受字符输入并返回字符或数值
+select chr(96) from dual;
+
+CHR(96)
+-------
+`
+select ascii('a') from dual;
+
+ASCII('A')
+----------
+        97
+
+select lpad('abcd',10,'x') from dual;
+
+LPAD('ABCD',10,'X')
+-------------------
+xxxxxxabcd
+```
+
+- 日期时间函数
+>日期函数对日期值进行运算，并生成日期数据类型或数值类型的结果  
+>- 日期函数包括： 
+>>ADD_MONTHS  
+MONTHS_BETWEEN  
+LAST_DAY  
+ROUND  
+NEXT_DAY  
+TRUNC  
+EXTRACT
+
+```
+-- oracle取年份，比较麻烦
+select extract(year from sysdate) from dual;
+
+-- 这个月的最后一天
+select last_day(sysdate) from dual;
+
+-- 大于27岁的员工
+select *from employee where add_months(birthday,47*12)<sysdate;
+
+-- 从出生到现在有多少天
+select floor(sysdate - birthday) from employee
+
+-- 员工的出生日期为当月最后20天那日
+select *from employee where last_day(birthday)-20 = birthday;
+```
+- 数字函数
+数字函数接受数字输入并返回数值结果
+
+函数 | 输入 |输出
+---|---|---
+Abs(n) |	Select abs(-15) from dual; |	15
+Ceil(n) |	Select ceil(44.778) from dual; |	45
+Cos(n) 	|Select cos(180) from dual; |	-.5984601 
+Cosh(n) |	Select cosh(0) from dual; |	1
+Floor(n) |	Select floor(100.2) from dual; |	100
+Power(m,n) |	Select power(4,2) from dual; |	16 
+Mod(m,n) |	Select mod(10,3) from dual; |	1
+Round(m,n)| 	Select round(100.256,2) from dual; |	100.26 
+Trunc(m,n)| 	Select trunc(100.256,2) from dual; |	100.25 
+Sqrt(n) |	Select sqrt(4) from dual; |	2 
+Sign(n)|	Select sign(-30) from dual;|	-1
+
+- 转换函数
+>转换函数将值从一种数据类型转换为另一种数据类型
+>- 常用的转换函数有：
+>>TO_CHAR  
+TO_DATE  
+TO_NUMBER 
+
+- 混合函数
+>DECODE()函数  
+>以下是几个用来转换空值的函数：    
+>>NVL，第一为空返回二；否则返回一;  
+NVL2，第一个不空则返回二；否则返回三。  
+NULLIF，两个表达式，相等则返回空；否则第一个  
+
+
+```
+select nvl(2,1) from dual;
+
+  NVL(2,1)
+----------
+         2
+select nvl('',1) from dual;
+
+NVL('',1)
+---------
+1
+select nvl(null,1) from dual;
+
+NVL(NULL,1)
+-----------
+          1
+select nvl2(11,22,33) from dual;
+
+NVL2(11,22,33)
+--------------
+            22
+select nvl2(NULL,22,33) from dual;
+
+NVL2(NULL,22,33)
+----------------
+              33
+select nullif(2,2) from dual;
+
+NULLIF(2,2)
+-----------
+select nullif(2,23) from dual;
+
+NULLIF(2,23)
+------------
+           2
+```
+- 分组函数
+>分组函数基于一组行来返回结果  
+为每一组行返回一个值
+
+
+`分组函数->AVG MIN MAX SUM COUNT`
+
+#### GROUP BY和HAVING子句
+- GROUP BY子句
+>用于将信息划分为更小的组  
+每一组行返回针对该组的单个结果
+
+- HAVING子句
+>用于指定 GROUP BY 子句检索行的条件
+
 - 练习
 ```
 -- 各部门的总工资
@@ -197,70 +405,46 @@ DEPARTMENT AVG(SALARY)
 办公室            4000
 财务科          5800.8
 ```
-#### 数据控制语言
->数据控制语言为用户提供权限控制命令 
-用于权限控制的命令有：
->>GRANT 授予权限  
-REVOKE 撤销已授予的权限
 
-### SQL操作符
-Oracle 支持的SQL操作符分类如下：算术操作符、比较操作符、逻辑操作符、集合操作符、连接操作符。
+### Oracle 的多表查询
+>等值连接  
+外连接  
+自连接  
+子查询
 
-### Oracle 函数
+- 相等联接的写法
+```SQL  
+-- 相等连接(第一种写法)：
+select table1.column,table2.column
+from  table1, table2 
+where  table1.column1=table2.column2
 
-- 字符函数
-
-函数 | 输入 |输出
----|---|---
-Initcap(char) 	|Select initcap('hello') from dual;	|Hello 
-Lower(char) 	|Select lower('FUN') from dual;	|fun 
-Upper(char) 	|Select upper('sun') from dual;	|SUN 
-Ltrim(char,set) 	|Select ltrim( 'xyzadams','xyz') from dual; 	|adams
-Rtrim(char,set) 	|Select rtrim('xyzadams','ams') from dual; |xyzad 
-Translate(char, from, to) 	|Select translate('jack','j' ,'b') from dual; 	|back 
-Replace(char, searchstring,[rep string]) 	|Select replace('jack and jue' ,'j','bl') from dual;	|black and blue 
-Instr (char, m, n) 	|Select instr ('worldwide','d') from dual; 	|5 
-Substr (char, m, n) 	|Select substr('abcdefg',3,2) from dual; 	|cd 
-Concat (expr1, expr2) 	|Select concat ('Hello',' world') from dual; 	|Hello world
-
-- 字符函数
+-- 相等连接(第二种写法)：
+select table1.column,table2.column
+from  table1 inner join table2 
+on   table1.column1=table2.column2
 ```
-select chr(96) from dual;
+- 左外联接的写法
+```SQL  
+-- 左外连接(第一种写法)：
+select table1.column,table2.column
+from  table1 left  outer  join table2
+on   table1.column1=table2.column2
 
-CHR(96)
--------
-`
-select ascii('a') from dual;
-
-ASCII('A')
-----------
-        97
-
-select lpad('abcd',10,'x') from dual;
-
-LPAD('ABCD',10,'X')
--------------------
-xxxxxxabcd
+-- 左外连接(第二种写法)：
+select table1.column,table2.column
+from  table1, table2 
+where  table1.column1=table2.column2(+)
 ```
+- 集合操作符  
+集合操作符将两个查询的结果组合成一个结果
+`集合操作符->UNION UNION ALL INTERSECT MINUS`
+>INTERSECT 操作符只返回两个查询的公共行。  
+MINUS 操作符返回从第一个查询结果中排除第二个查询中出现的行  
 
-- 日期时间函数
-```
--- oracle取年份，比较麻烦
-select extract(year from sysdate) from dual;
-
--- 这个月的最后一天
-select last_day(sysdate) from dual;
-
--- 大于27岁的员工
-select *from employee where add_months(birthday,47*12)<sysdate;
-
--- 从出生到现在有多少天
-select floor(sysdate - birthday) from employee
-
--- 员工的出生日期为当月最后20天那日
-select *from employee where last_day(birthday)-20 = birthday;
-```
-
+- 重命名
+>重命名表：rename table_name1 to table_name2;  
+重命名列：alter table table_name rename column col_oldname to colnewname ;
 ```
 --from 产业基地
 create table employee(
