@@ -268,4 +268,153 @@ group by a.name
 order by 1;
 ```
 #### ROWNUM 的使用
-between and 只能从1开始，否则取不到记录
+- between and 只能从1开始，否则取不到记录
+
+[为什么oracle中rownum只能小于，不能大于](https://zhidao.baidu.com/question/590128041.html)
+
+```
+-- 记得，rownum不能取大于1的，所以要取别名
+select bh,gz 
+from (
+  select yggz.*, rownum rn
+  from yggz 
+)
+where rn >=3 and rn <= 5;
+```
+- 查找表中，第3条到第5条记录，并显示出来。
+```SQL
+-- 第一种写法
+select * from yggz where rownum<=5
+minus
+select * from yggz where rownum<=2;
+
+     BH         GZ
+------- ----------
+      3        900
+      4       2000
+      5       1500
+	  
+select yggz.*, rownum rn
+from yggz;
+
+     BH         GZ         RN
+------- ---------- ----------
+      1       1000          1
+      2       1100          2
+      3        900          3
+      4       2000          4
+      5       1500          5
+      6       3000          6
+      7       1400          7
+      8       1200          8
+      
+-- 第二种写法
+select bh,gz 
+from (
+  select yggz.*, rownum rn
+  from yggz 
+)
+where rn >=3 and rn <= 5;
+
+--创建yggz表（员工工资表）
+create table yggz (
+    bh number(6),
+    gz number
+);
+
+insert into yggz values(1,1000);
+insert into yggz values(2,1100);
+insert into yggz values(3,900);
+insert into yggz values(4,2000);
+insert into yggz values(5,1500);
+insert into yggz values(6,3000);
+insert into yggz values(7,1400);
+insert into yggz values(8,1200);
+```
+- 按工资由高到底，查找表中，第3高的到第5高的记录，并显示出来
+```SQL
+select *from yggz order by gz desc;
+
+     BH         GZ
+------- ----------
+      6       3000
+      4       2000
+      5       1500
+      7       1400
+      8       1200
+      2       1100
+      1       1000
+      3        900
+      
+-- 记得要对rownum取别名
+select bh,gz from (
+    select a.*,rownum rn from(
+    select yggz.* from yggz 
+    order by gz desc  ) a 
+)
+where rn<=5 and rn>2;
+
+-- 或第二种写法
+select * from (
+    select * from yggz
+    order by gz desc)       
+where rownum<=5
+minus
+select * from (
+    select * from yggz
+    order by gz desc)      
+where rownum<=2;
+```
+### 删除重复记录
+
+- rowid里的信息有 数据库对象号、数据文件号、数据块号、行号。rowid查询是最快的，比索引还快。
+```
+select student.*,rowid from student;
+ SNO SNAME      SAGE TELE        ROWID
+---- ---------- ---- ----------- ------------------
+   1 张一         16             AAAE5mAABAAAK/hAAA
+   2 张二         15             AAAE5mAABAAAK/hAAB
+   3 张三         18             AAAE5mAABAAAK/hAAC
+   4 赵飞         30             AAAE5mAABAAAK/hAAD
+   5 润之         20             AAAE5mAABAAAK/hAAE
+   6 陈独秀       34             AAAE5mAABAAAK/hAAF
+   7 李大釗       35             AAAE5mAABAAAK/hAAG
+   8 革命         35             AAAE5mAABAAAK/hAAH
+```
+
+```SQL
+create table s(sno number(6)  , sname varchar2(10), sage  int );  
+insert into s values(1, 'AA', 21);
+insert into s values(2, 'BB', 22);
+insert into s values(3, 'CC', 23);
+insert into s values(3, 'CC', 34);
+insert into s values(3, 'CC', 35);
+insert into s values(3, 'CC', 36);
+
+select s.*,rowid from s;
+
+    SNO SNAME                                         SAGE ROWID
+------- ---------- --------------------------------------- ------------------
+      1 AA                                              21 AAAE9JAABAAALBxAAA
+      2 BB                                              22 AAAE9JAABAAALBxAAB
+      3 CC                                              23 AAAE9JAABAAALBxAAC
+      3 CC                                              34 AAAE9JAABAAALBxAAD
+      3 CC                                              35 AAAE9JAABAAALBxAAE
+      3 CC                                              36 AAAE9JAABAAALBxAAF
+
+-- 方法一
+delete from s
+where sno in 
+(select sno from s group by sno having count(*) > 1)
+and rowid not in
+(select min(rowid) from s group by sno having count(*) > 1);
+
+-- 方法二
+delete from student where rowid in
+(select a.rowid from student a,student b 
+ where a.sno=b.sno and a.rowid > b.rowid);
+ 
+-- 方法三
+delete from student d where d.rowid >
+(select min(x.rowid) from student x where d.sno=x.sno);
+```
