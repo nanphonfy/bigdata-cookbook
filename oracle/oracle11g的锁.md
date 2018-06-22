@@ -13,6 +13,40 @@
 >- 完整性 - 为所有用户提供正确的数据。如果一个用户进行了修改并保存，所做的修改将反映给所有用户  
 >- 并行性 - 允许多个用户访问同一数据
 
+锁的类型：行级锁、表级锁
+
+#### 行级锁
+>
+    对正在被修改的行进行锁定。其他用户可以访问除被锁定的行以外的行  
+    行级锁是一种排他锁，防止其他事务修改此行  
+    在使用以下语句时，Oracle会自动应用行级锁：  
+        INSERT
+        UPDATE
+        DELETE
+        SELECT … FOR UPDATE
+    SELECT … FOR UPDATE语句允许用户一次锁定多条记录进行更新
+    使用COMMIT或ROLLBACK语句释放锁
+
+- SELECT … FOR UPDATE语法:
+>
+    　SELECT … FOR UPDATE [OF   columns] [WAIT n | NOWAIT];
+
+```SQL
+SQL> SELECT * FROM emp WHERE sal=1000
+    FOR UPDATE;
+SQL> UPDATE emp SET sal = 3000
+    WHERE  sal =1000;
+SQL> COMMIT;
+
+SQL> SELECT * FROM scott.emp WHERE sal=1000
+    FOR UPDATE WAIT 5;
+
+SQL> SELECT * FROM scott.emp WHERE sal=1000
+    FOR UPDATE NOWAIT ;
+```
+
+#### 表级锁
+锁定整个表，限制其他用户对表的访问
 
 ```SQL
 SQL> select * from grade;
