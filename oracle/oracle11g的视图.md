@@ -57,13 +57,14 @@ select *from user_views;
 select *from view1;
 
 create view view2 as
-select *from employee
-where no = 1；
+select *from employee 
+where employee = 'E2005001';
 
 select *from view2;
+
 --视图能否更新
 --视图的更新会影响基表
-update view2 set sno=5 where sno=1;
+update view2 set employee='T2005001' where employee='E2005001';
 
 
 create view view2 as
