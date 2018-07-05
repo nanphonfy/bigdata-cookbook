@@ -67,36 +67,58 @@ select *from view2;
 update view2 set employee='T2005001' where employee='E2005001';
 
 
-create view view2 as
+create view view3 as
 select *from employee
-where no = 3
-with check option；
+where employee='E2005001'
+with check option;
 
 --视图不让更新，减少视图结果集的操作
-update view2 set sno=55 where sno=3;
+SQL> update view2 set employee='D2005001' where employee='E2005001';
+1 row updated
+
+SQL> update view3 set employee='D2005001' where employee='E2005001';
+0 rows updated
 
 --创建不可更新的视图
 create view view4 as
-select *from employee with read only;
+select *from employee 
+with read only;
 
 select *from view4;
+EMPLOYEE   EMPLOYEENAME SEX BIRTHDAY    ADDRESS                     TELEPHONE HIREDATE    DEPARTMENT HEADSHIP         SALARY
+---------- ------------ --- ----------- --------------- --------------------- ----------- ---------- ---------- ------------
+D2005001   喻自强       M   1965/4/15   南京市                    13817605008 1990/2/6    财务科     科长            5800.80
+E2005002   张小梅       F   1973/11/1   上海市                    13817605008 1991/3/28   业务科     职员            3400.00
+
 
 --可以带order by
 create view view5 as
 select *from employee
-order by sno desc;
+order by hiredate desc;
 
 --【单表视图支持更新】
 
 --多表连接的视图不支持更改。
-create view view_student1_address1
+create view view_student_grade
 as
- select s.sno,s.sname,a.sno,a.zz
- from ...
+select s.sno s_sno,s.sname,g.km,g.score,g.sno g_sno
+from student s,grade g
+where s.sno=g.sno;
  
-select *from view_student1_address1;
+select *from view_student_grade;
 
-update view_student1_address1 set ... where ...
+S_SNO SNAME      KM              SCORE      G_SNO
+----- ---------- ---------- ---------- ----------
+    1 张一       语文               65          1
+    2 张二       数学               76          2
+    3 张三       英语               86          3
+    4 赵飞       语文               94          4
+
+update view_student_grade set s_sno=11 where s_sno=1
+ORA-01779: 无法修改与非键值保存表对应的列
+
+update view_student_grade set g_sno=11 where g_sno=1
+ORA-01779: 无法修改与非键值保存表对应的列
 
 --多表视图就是复杂视图
 eg.学生表和部门表
