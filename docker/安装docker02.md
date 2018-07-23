@@ -23,14 +23,14 @@ docker help 或 man docker-run
 >>root@f7cbdac22a02:/#
 
 ### 使用第一个容器
-- 启动和进入容器
+- 启动和进入容器  
 [root@localhost ~]# docker run -i -t centos /bin/bash
 
-- 检查容器的主机名
+- 检查容器的主机名  
 [root@64400cb50071 /]# hostname
 64400cb50071
 
-- 检查容器的/etc/hosts文件
+- 检查容器的/etc/hosts文件  
 [root@64400cb50071 /]# cat /etc/hosts
 ```Linux
 127.0.0.1	localhost
@@ -42,7 +42,7 @@ ff02::2	ip6-allrouters
 172.17.0.2	64400cb50071
 ```
 
-- 检查容器的进程
+- 检查容器的进程  
 [root@64400cb50071 /]# ps -aux
 ```Linux
 USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
@@ -53,7 +53,7 @@ root        15  0.0  0.0  51708  1712 ?        R+   18:55   0:00 ps -aux
 只有指定的/bin/bash命令处于运行状态时，容器才处于运行状态。一旦退出容器，/bin/bash命令也结束了，这时容器随之停止。
 但容器仍存在，可用docker ps -a命令查看当前系统中容器的列表。
 
-- 列出Docker容器
+- 列出Docker容器  
 [root@localhost ~]# docker ps -a
 
 ```Linux
@@ -64,14 +64,101 @@ eac7e8c4f9fd        centos              "/bin/bash"              About an hour a
 cb88bdbe9df5        centos              "/bin/bash"              About an hour ago   Exited (137) About an hour ago                       zsr_the_container
 949a715e4d0f        centos              "/bin/bash"              About an hour ago   Exited (0) About an hour ago                         zealous_pasteur
 ```
->默认，当执行docker ps命令时，只能看到正在运行的容器。指定-a标志：docker ps命令会列出所有容器，包括正在运行和已停止的。
+>默认，当执行docker ps命令时，只能看到正在运行的容器。指定-a标志：`docker ps`命令会列出所有容器，包括正在运行和已停止的。
 
 - 列出最后一个运行的容器
-docker ps -l
+`docker ps -l`
 
 - 3种方式可以唯一指代容器
 短UUID（如f7cbdac22a02）、长UUID（如f7cbdac
 22a02e03c9438c729345e54db9d20cfa2ac1fc3494b6eb60872e74778）或者名称（如gray_cat）
+
+### 容器命名
+>Docker会为我们创建的每一个容器自动生成一个随机的名称。
+
+- 给容器命名
+```
+[root@localhost ~]# docker run --name bob_the_container -i -t centos /bin/bash
+root@aa3f365f0f4e:/# exit  
+```
+上述命令会创建一个名为bob_the_container的容器。一个合法的容器名称只能包含[a-zA-Z0-9_.-]。  
+容器名称有助于分辨容器，当构建容器和应用程序之间的逻辑连接时，容器的名称也有助于从逻辑上理解连接关系。  
+具体的名称（如web、db）比容器ID和随机容器名好记多了。  
+容器的命名必须是唯一的。
+- 删除容器  
+`docker rm`
+
+### 重新启动已经停止的容器
+- 启动已经停止运行的容器  
+`sudo docker start bob_the_container`  
+- 通过ID启动已经停止运行的容器  
+`sudo docker start aa3f365f0f4e`  
+>也可用`docker restart`重启容器。
+这时运行不带-a标志的docker ps命令，就应该看到我们的容器已经开始运行了。  
+
+### 附着到容器上
+Docker容器重启时，会沿用docker run命令时指定的参数来运行，因此我们的容器重启后会运行一个交互式会话shell。此外，也可以用docker attach命令，重新附着到该容器的会话上。   
+- 附着到正在运行的容器   
+`docker attach bob_the_container`  
+- 重新附着到容器的会话
+root@aa3f365f0f4e:/_#_
+>可能需要按下回车键才能进入该会话。  
+如果退出容器的shell，容器会再次停止运行。  
+
+### 创建守护式容器
+>除交互式运行的容器，也可创建长期运行的容器。守护式容器没有交互式会话，非常适合运行应用程序和服务。大多数时候都需要以守护式来运行容器。
+- 创建长期运行的容器
+>$ sudo docker run --name daemon_dave -d centos /bin/sh -c "while
+　true; do echo hello world; sleep 1; done"
+
+>`docker run`命令使用-d参数，会将容器放到后台运行。  
+还使用了一个while循环，会一直打印hello world，直到容器或其进程停止。  
+组合以上参数，没将主机的控制台附着到新的shell会话上，而是仅返回容器ID，还在主机命令行中。
+
+- 查看正在运行的daemon_dave容器
+`docker ps`    
+CONTAINER ID IMAGE　　　　　COMMAND　　　　　　　　CREATED
+　STATUS PORTS NAMES
+1333bb1a66af ubuntu:14.04 /bin/sh -c 'while tr 32 secs ago Up 27
+　　　　　　daemon_dave
+
+### 容器内部都在干些什么
+>探究守护型容器内部在干什么  
+`docker logs`  
+```
+-- 获取守护式容器的日志,Docker会输出最后几条日志项并返回
+$ sudo docker logs daemon_dave
+hello world
+hello world
+hello world
+hello world
+hello world
+hello world
+hello world
+
+-- 跟踪守护式容器的日志，与tail -f相似
+$ sudo docker logs -f daemon_dave
+hello world
+hello world
+hello world
+hello world
+hello world
+hello world
+hello world
+```
+`Ctr+C`退出日志跟踪。
+`docker logs --tail 10 daemon_dave`获取日志的最后10行内容。  
+`docker logs --tail 0 -f daemon_dave`跟踪某个容器的最新日志而不必读取整个日志文件。  
+
+- 跟踪守护式容器的最新日志,使用-t标志为每条日志项加上时间戳  
+```
+$ sudo docker logs -ft daemon_dave
+[May 10 13:06:17.934] hello world
+[May 10 13:06:18.935] hello world
+[May 10 13:06:19.937] hello world
+[May 10 13:06:20.939] hello world
+[May 10 13:06:21.942] hello world
+```
 
 ```
 --centos7
