@@ -159,6 +159,21 @@ $ sudo docker logs -ft daemon_dave
 [May 10 13:06:20.939] hello world
 [May 10 13:06:21.942] hello world
 ```
+#### Docker日志驱动
+>1.6后可控制Docker守护进程和容器所用的日志驱动，`--log-driver`，启动Docker守护进程或执行docker run命令时使用这个选项。
+`json-file`，`json-file`提供了基础，`syslog`将禁用docker logs命令，且将所有容器的日志输出都重定向到Syslog。
+- 在容器级别启动Syslog
+```
+$ sudo docker run --log-driver="syslog" --name daemon_dwayne -d
+　ubuntu /bin/sh -c "while true; do echo hello world; sleep 1;
+　done"
+```
+
+#### 查看容器内的进程
+>除容器日志，也可查看容器内部运行的进程。使用`docker top`
+- 查看守护式容器的进程  
+`$ sudo docker top daemon_dave`
+>执行后，可看到容器内的所有进程（主要还是我们的while循环）、运行进程的用户及进程ID
 
 ```
 --centos7
