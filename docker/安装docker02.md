@@ -175,6 +175,96 @@ $ sudo docker run --log-driver="syslog" --name daemon_dwayne -d
 `$ sudo docker top daemon_dave`
 >执行后，可看到容器内的所有进程（主要还是我们的while循环）、运行进程的用户及进程ID
 
+#### Docker统计信息
+`docker stats`显示一个或多个容器的统计信
+息。
+- docker stats命令
+```
+docker run --name daemon_dave -d centos /bin/sh
+
+CONTAINER           CPU %               MEM USAGE / LIMIT   MEM %               NET I/O             BLOCK I/O           PIDS
+zsr_the_container   --                  -- / --             --                  --                  --                  --
+daemon_dave         --                  -- / --             --                  --                  --                  --
+```
+>守护式容器列表，以及CPU、内存、网络I/O、存储I/O的性能和指标。
+
+### 在容器内部运行进程
+`docker exec`  
+>在容器内部额外启动新进程。可在容器内运行：后台任务（在容器内运行且没交互需求）和交互式任务（保持在前台运行）。
+```
+- 在容器内运行交互命令    
+docker exec -t -i daemon_dave /bin/bash
+```
+>和运行交互容器时一样，-t和-i标志创建了TTY并捕捉STDIN。接着指定了容器的名字以及要执行的命令。
+
+#### 停止守护式容器
+- 停止正在运行的Docker容器  
+`docker stop daemon_dave`
+- 通过容器ID停止正在运行的容器  
+`docker stop c2c4e57c12c4`
+
+### 自动重启容器
+>由于某种错误导致容器停止运行，还可通过--restart标志，让Docker自动重新启动。--restart标志会检查容器的退出代码，并据此来决定是否要重启容器。默认Docker不重启容器。
+```
+- 自动重启容器  
+docker run --restart=always --name daemon_dave -d ubuntu /bin/sh -c "while true; do echo hello world; sleep 1; done"
+```
+>--restart标志被设置为always。无论容器的退出代码是什么，Docker都会自动重启。
+>>除always，还可将这个标志设为on-failure（只有当容器的退出代码非0，才会自动重启）。on-failure还接受一个可选的重启次数参数。
+
+```
+- 为on-failure指定count参数
+--restart=on-failure:5
+```
+>这样，当容器退出代码为非0时，Docker会尝试自动重启该容器，最多重启5次。
+
+### 深入容器
+- 查看容器
+```
+[root@localhost ~]# docker inspect daemon_dave
+[
+    {
+        "Id": "b7c645a7a8c5ea53861685b98e2ee74298cb4e9e94d8291a0f08121d06b8550f",
+        "Created": "2018-07-21T17:35:21.063296159Z",
+        "Path": "/bin/sh",
+        "Args": [
+            "-c",
+            "while true; do echo hello world; sleep 1; done"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 3058,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2018-07-21T21:03:38.028921078Z",
+            "FinishedAt": "2018-07-21T17:42:03.866625535Z"
+        },
+        ...
+```
+>docker inspect命令会对容器详细检查，返回配置信息（名称、命令、网络配置及很多有用数据）
+
+- 有选择地获取容器信息
+```
+docker inspect --format='{{ .State.Running }}' daemon_dave
+false
+```
+
+#### 删除容器
+`docker rm`
+
+```
+- 删除容器
+docker rm 80430f8d0921
+
+- 删除所有容器
+docker rm `sudo docker ps -a -q`
+```
+>docker ps命令会列出现有全部容器，-a标志代表列出所有容器，而-q标志只需返回容器的ID而不返回容器的其他信息。
 ```
 --centos7
 yum install subscription-manager
