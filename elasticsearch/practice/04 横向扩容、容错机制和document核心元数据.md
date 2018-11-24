@@ -20,6 +20,8 @@
 （3）replica容错：新master将replica提升为primary shard，yellow；  
 （4）重启宕机node，master copy replica到该node，使用原有的shard并同步宕机后的修改，green。
 
+![image](https://raw.githubusercontent.com/nanphonfy/note-images/master/bigdata-cookbook/elasticsearch/practice/04/tolerant_process.png)
+
 ### 三.初步解析document的核心元数据及图解剖析index创建反例
 >1、_index元数据  
 2、_type元数据  
@@ -52,3 +54,5 @@
 #### 3、_id元数据
 >（1）代表document的唯一标识，与index和type一起，可唯一标识和定位一个document;  
 （2）可手动指定document的id（put /index/type/id），也可不指定，由es自动创建id.
+
+![image](https://raw.githubusercontent.com/nanphonfy/note-images/master/bigdata-cookbook/elasticsearch/practice/04/index_analysis.png)
